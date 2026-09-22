@@ -1,5 +1,6 @@
 .env
 .env.local
+.env.*.local
 *.pem
 __pycache__/
 *.py[cod]
@@ -10,3 +11,7 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
