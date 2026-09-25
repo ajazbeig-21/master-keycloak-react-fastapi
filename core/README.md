@@ -43,10 +43,50 @@ Add a minimal Docker Compose overlay (Keycloak + Postgres, env templates, and st
 
 ## Run Lab 0
 
+Shop (API + React) — always use this first:
+
 ```bash
 cd core
 docker compose up --build
 ```
 
-- UI: http://localhost:3000  
+- UI: http://localhost:3000 (not Vite’s http://localhost:5173)  
 - API docs: http://localhost:8000/docs  
+
+Keycloak is optional until your module needs it:
+
+```bash
+cd core
+docker compose --profile keycloak up --build
+```
+
+- Keycloak admin: http://localhost:8080 (user `admin`, password `admin123`)  
+
+Check that the shop containers are up:
+
+```bash
+docker compose ps
+```
+
+You should see `core-api` and `core-web` with status **Up** (and **healthy** for the API). If they are missing, something else is using port **8000** or **3000** — stop that process or change the host ports in `docker-compose.yml`.
+
+### Shop UI or API not loading
+
+1. Run from the **`core/`** directory (where `docker-compose.yml` lives).  
+2. Use **http://localhost:3000** for the app; the browser talks to FastAPI through nginx at `/api/...`.  
+3. After Keycloak troubleshooting, run **`docker compose up --build`** again (without service names) so **api** and **web** start — not only `postgres` / `keycloak`.  
+4. Confirm: `curl -s http://localhost:8000/health` → `{"status":"ok"}` and `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/` → `200`.
+
+### Keycloak: `password authentication failed for user "keycloak"`
+
+Postgres only applies `POSTGRES_USER` / `POSTGRES_PASSWORD` on **first** init. If the data volume already existed (log line: *Skipping initialization*), the password in the volume may not match `keycloak123` in compose.
+
+Reset Keycloak’s database volumes and start again:
+
+```bash
+cd core
+docker compose --profile keycloak down -v
+docker compose --profile keycloak up --build
+```
+
+`-v` removes named volumes (`shopwave_postgres_data`, `shopwave_keycloak_data`). You lose prior Keycloak realm data in Docker; fine for local lab work.
